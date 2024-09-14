@@ -4,17 +4,24 @@ import { useEffect } from "react";
 function App() {
   const [products, setProducts] = useState([]);
   const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
 
   const fetchProducts = async () => {
-    const response = await fetch("https://dummyjson.com/products?limit=100");
+    const response = await fetch(
+      `https://dummyjson.com/products?limit=10&skip=${page * 10 - 10}`
+    );
     const data = await response.json();
 
-    if (data && data.products) setProducts(data.products);
+    if (data && data.products) {
+      console.log("data", data);
+      setProducts(data.products);
+      setTotalPages(Math.ceil(data.total / 10)); //fixed for decimal values
+    }
   };
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [page]);
 
   const selectPageHandler = (selectedPage) => {
     setPage(selectedPage);
@@ -24,7 +31,7 @@ function App() {
     <div>
       {products.length > 0 && (
         <ul className="products">
-          {products.slice(page * 10 - 10, page * 10).map((product) => (
+          {products.map((product) => (
             <li className="products-item" key={product.id}>
               <img src={product.thumbnail} alt={product.title} />
               <span>{product.title}</span>
@@ -43,7 +50,7 @@ function App() {
           >
             ◀
           </button>
-          {[...Array(products.length / 10)].map((_, index) => {
+          {[...Array(totalPages)].map((_, index) => {
             return (
               <button
                 key={index}
@@ -55,9 +62,9 @@ function App() {
             );
           })}
           <button
-            disabled={page === 10}
+            disabled={page === totalPages}
             onClick={() => {
-              if (page < products.length / 10) selectPageHandler(page + 1);
+              if (page < totalPages) selectPageHandler(page + 1);
             }}
           >
             ▶
